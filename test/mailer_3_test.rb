@@ -13,6 +13,11 @@ class Mailer3Test < Test::Unit::TestCase
       assert_equal ({}), mail.arguments['content']
     end
 
+    def test_create_with_no_subject
+      mail = Notifier.with_no_subject
+      assert mail.arguments['headers'][:subject].nil?
+    end
+
     def test_create_with_simple_view
       mail = Notifier.with_simple_view
       assert_equal 'with layout simple view content', mail.arguments['content']['text/html']
@@ -85,6 +90,14 @@ class Mailer3Test < Test::Unit::TestCase
       mail.delivery_method(Mail::TestMailer)
       mail.deliver
       assert_equal [mail], ActionMailer::Base.deliveries
+    end
+
+    def test_deliver_for_not_performing_deliveries_with_test_mailer
+      mail = Notifier.with_simple_view
+      mail.perform_deliveries = false
+      mail.delivery_method(Mail::TestMailer)
+      mail.deliver
+      assert_equal [], ActionMailer::Base.deliveries
     end
 
   else
