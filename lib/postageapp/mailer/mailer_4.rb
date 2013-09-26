@@ -112,7 +112,6 @@ class PostageApp::Mailer < ActionMailer::Base
 
     # Handle defaults
     headers = headers.reverse_merge(default_values)
-    headers[:subject] ||= default_i18n_subject
 
     # Apply charset at the beginning so all fields are properly quoted
     charset = headers[:charset]
@@ -142,7 +141,7 @@ protected
       templates.uniq { |t| t.formats }.each(&block)
     end
   end
-  
+
   def create_parts_from_responses(m, responses) #:nodoc:
     map = {
       'html' => 'text/html',
@@ -164,13 +163,20 @@ class PostageApp::Request
                 :perform_deliveries,
                 :raise_delivery_errors
 
+  def inform_interceptors
+    Mail.inform_interceptors(self)
+  end
+
   # Either doing an actual send, or passing it along to Mail::TestMailer
   # Probably not the best way as we're skipping way too many intermediate methods
   def deliver
-    if @delivery_method == Mail::TestMailer
-      @delivery_method.deliveries << self
-    else
-      self.send
+    inform_interceptors
+    if perform_deliveries
+      if @delivery_method == Mail::TestMailer
+        @delivery_method.deliveries << self
+      else
+        self.send
+      end
     end
   end
 
